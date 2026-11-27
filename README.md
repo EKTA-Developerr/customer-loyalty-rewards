@@ -21,9 +21,10 @@ A web application built with **PHP 8+ and MySQL** for a factory producing physic
      ```
    - Update `DB_USER` and `DB_PASS` in `.env` (for default XAMPP: `DB_USER=root`, `DB_PASS=`).
 4. **Place Project in Web Root:**
-   - Copy the `freshbite-loyalty-php` folder into `C:\xampp\htdocs\loyalty\` (or `/Applications/XAMPP/htdocs/loyalty/`).
+   - Copy the `freshbite-loyalty-php` folder into `C:\xampp\htdocs\customer-loyalty-rewards\` (or `/Applications/XAMPP/htdocs/customer-loyalty-rewards/`).
 5. **Open in Browser:**
-   - Visit `http://localhost/loyalty/index.php`
+   - Visit `http://localhost/customer-loyalty-rewards/`
+   - Visit [http://localhost/customer-loyalty-rewards/](http://localhost/customer-loyalty-rewards/)
    - Use **Customer** tab to scan/enter codes (`FB-9X4K-2M8P`, `FB-7L2Q-9R1A`, `FB-USED-0001`).
    - Use **Factory Owner** tab to generate new batches, download QR PNGs, export CSV, and inspect fraud logs.
 
