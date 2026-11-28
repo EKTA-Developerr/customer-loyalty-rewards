@@ -218,6 +218,48 @@
         </div>
       </div>
 
+      <!-- Customer Purchase Analytics (Highest / Average / Lowest) -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <h2 class="font-bold text-slate-900 text-base flex items-center gap-2">
+            <i data-lucide="bar-chart-3" class="w-5 h-5 text-emerald-600"></i>
+            <span>Customer Purchase Analytics (High / Average / Low)</span>
+          </h2>
+          <span class="text-xs text-slate-500" id="analytics-cust-count">0 active buyers</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200">
+            <div class="text-xs font-bold uppercase tracking-wider text-emerald-700 flex items-center justify-between">
+              <span>Highest Buyer</span>
+              <i data-lucide="trophy" class="w-4 h-4 text-amber-500"></i>
+            </div>
+            <div class="text-lg font-extrabold text-slate-900 mt-1 font-mono" id="insight-high-phone">—</div>
+            <div class="text-xs text-emerald-800 mt-0.5" id="insight-high-meta">No scans yet</div>
+          </div>
+
+          <div class="p-4 rounded-xl bg-blue-50 border border-blue-200">
+            <div class="text-xs font-bold uppercase tracking-wider text-blue-700 flex items-center justify-between">
+              <span>Average per Customer</span>
+              <i data-lucide="activity" class="w-4 h-4 text-blue-600"></i>
+            </div>
+            <div class="text-lg font-extrabold text-slate-900 mt-1" id="insight-avg-scans">0 scans</div>
+            <div class="text-xs text-blue-800 mt-0.5" id="insight-avg-earned">Avg ₹0 cashback</div>
+          </div>
+
+          <div class="p-4 rounded-xl bg-amber-50 border border-amber-200">
+            <div class="text-xs font-bold uppercase tracking-wider text-amber-800 flex items-center justify-between">
+              <span>Lowest Buyer</span>
+              <i data-lucide="trending-down" class="w-4 h-4 text-amber-600"></i>
+            </div>
+            <div class="text-lg font-extrabold text-slate-900 mt-1 font-mono" id="insight-low-phone">—</div>
+            <div class="text-xs text-amber-900 mt-0.5" id="insight-low-meta">No scans yet</div>
+          </div>
+        </div>
+
+        <div id="leaderboard-strip" class="flex flex-wrap gap-2 pt-1"></div>
+      </div>
+
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6">
           <h2 class="font-bold text-slate-900 text-base flex items-center gap-2 mb-4">
@@ -412,7 +454,8 @@
     }
     const state = {
       codes: [], fraudLogs: [], customerClaims: [], walletBalance: 0,
-      loyalty: { scans: 0, tier: 'Bronze', multiplier: '1x Standard', nextTier: 'Silver (+₹10)', scansToNext: 10, progress: 0 }
+      loyalty: { scans: 0, tier: 'Bronze', multiplier: '1x Standard', nextTier: 'Silver (+₹10)', scansToNext: 10, progress: 0 },
+      customerInsights: null
     };
     const el = (id) => document.getElementById(id);
     let html5QrInstance = null;
@@ -439,6 +482,7 @@
       state.customerClaims = data.customerClaims || [];
       state.walletBalance = data.walletBalance || 0;
       if (data.loyalty) state.loyalty = data.loyalty;
+      if (data.customerInsights) state.customerInsights = data.customerInsights;
       renderAll();
     }
 
@@ -635,6 +679,32 @@
       el('kpi-redeemed').textContent = redeemed.length;
       el('kpi-paid').textContent = `₹${paid}`;
       el('kpi-fraud').textContent = state.fraudLogs.length;
+
+      const ins = state.customerInsights;
+      if (ins) {
+        el('analytics-cust-count').textContent = `${ins.totalCustomers} active buyer(s)`;
+        if (ins.highest) {
+          el('insight-high-phone').textContent = ins.highest.phone;
+          el('insight-high-meta').textContent = `${ins.highest.total_scans} scans • ₹${ins.highest.total_earned} (${ins.highest.tier})`;
+        } else {
+          el('insight-high-phone').textContent = '—';
+          el('insight-high-meta').textContent = 'No scans yet';
+        }
+        el('insight-avg-scans').textContent = `${ins.avgScans} scans`;
+        el('insight-avg-earned').textContent = `Avg ₹${ins.avgEarned} cashback`;
+        if (ins.lowest) {
+          el('insight-low-phone').textContent = ins.lowest.phone;
+          el('insight-low-meta').textContent = `${ins.lowest.total_scans} scans • ₹${ins.lowest.total_earned} (${ins.lowest.tier})`;
+        } else {
+          el('insight-low-phone').textContent = '—';
+          el('insight-low-meta').textContent = 'No scans yet';
+        }
+        el('leaderboard-strip').innerHTML = (ins.leaderboard || []).map((b, i) => `
+          <span class="px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-[11px] text-slate-700 font-medium">
+            #${i + 1} <span class="font-mono font-bold">${b.phone}</span> • ${b.scans} scans (${b.tier})
+          </span>
+        `).join('');
+      }
 
       el('fraud-log-list').innerHTML = state.fraudLogs.map((f) => `
         <div class="p-2.5 rounded-xl bg-rose-50/70 border border-rose-100 text-xs flex items-start justify-between gap-2">

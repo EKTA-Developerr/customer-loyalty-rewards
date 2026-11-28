@@ -99,13 +99,50 @@ if ($action === 'state') {
 
     $tierInfo = getTierInfo($scans);
 
+    // Customer Purchase Analytics (Highest, Average, Lowest)
+    $allCusts = $pdo->query("
+        SELECT phone, total_scans, total_earned
+        FROM customers
+        WHERE total_scans > 0
+        ORDER BY total_scans DESC, total_earned DESC
+    ")->fetchAll();
+
+    $highest = $allCusts[0] ?? null;
+    $lowest = count($allCusts) > 0 ? $allCusts[count($allCusts) - 1] : null;
+    $sumScans = 0;
+    $sumEarned = 0;
+    $leaderboard = [];
+    foreach ($allCusts as $c) {
+        $sc = (int)$c['total_scans'];
+        $ea = (int)$c['total_earned'];
+        $sumScans += $sc;
+        $sumEarned += $ea;
+        $t = getTierInfo($sc);
+        $leaderboard[] = [
+            'phone' => $c['phone'],
+            'scans' => $sc,
+            'earned' => $ea,
+            'tier' => $t['tier']
+        ];
+    }
+    $avgScans = count($allCusts) > 0 ? round($sumScans / count($allCusts), 1) : 0;
+    $avgEarned = count($allCusts) > 0 ? round($sumEarned / count($allCusts)) : 0;
+
     jsonResponse([
         'ok' => true,
         'codes' => $codes,
         'fraudLogs' => $fraudLogs,
         'customerClaims' => $customerClaims,
         'walletBalance' => $walletBalance,
-        'loyalty' => array_merge(['scans' => $scans], $tierInfo)
+        'loyalty' => array_merge(['scans' => $scans], $tierInfo),
+        'customerInsights' => [
+            'highest' => $highest ? array_merge($highest, ['tier' => getTierInfo((int)$highest['total_scans'])['tier']]) : null,
+            'lowest' => $lowest ? array_merge($lowest, ['tier' => getTierInfo((int)$lowest['total_scans'])['tier']]) : null,
+            'avgScans' => $avgScans,
+            'avgEarned' => $avgEarned,
+            'totalCustomers' => count($allCusts),
+            'leaderboard' => array_slice($leaderboard, 0, 5)
+        ]
     ]);
 }
 
